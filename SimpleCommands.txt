@@ -28,26 +28,86 @@ docker container rm -f containerid
 
 
 
+test kubernetes version:
+
+kubectl version --short
+Client Version: v1.14.0
+Server Version: v1.13.0
 
 
 
-SETUP:
+kubectl run letskube-deployment --image=letskube:local --port=80 --replicas=3
 
-K8s on macos
-https://xebia.com/blog/running-kubernetes-locally-docker-mac-os-x/
-
-
-
-Server Refuse 8080 port:
-https://github.com/kubernetes/kubernetes/issues/50295
+arzads-MacBook-Pro:~ farzad$ kubectl get node
+NAME             STATUS   ROLES    AGE   VERSION
+docker-desktop   Ready    master   17m   v1.13.0
 
 
-Run these commands solved this issue:
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+Farzads-MacBook-Pro:~ farzad$ kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+letskube-deployment-cb77db99b-fttm4   1/1     Running   0          49s
+letskube-deployment-cb77db99b-pj5xf   1/1     Running   0          50s
+letskube-deployment-cb77db99b-vf4wm   1/1     Running   0          49s
+Farzads-MacBook-Pro:~ farzad$
 
-After running them, kubectl is working.
+
+Farzads-MacBook-Pro:~ farzad$ kubectl get deployments
+NAME                  READY   UP-TO-DATE   AVAILABLE   AGE
+letskube-deployment   3/3     3            3           114s
+Farzads-MacBook-Pro:~ farzad$ kubectl get rs
+NAME                            DESIRED   CURRENT   READY   AGE
+letskube-deployment-cb77db99b   3         3         3       2m2s
+Farzads-MacBook-Pro:~ farzad$ kubectl get pods
+NAME                                  READY   STATUS    RESTARTS   AGE
+letskube-deployment-cb77db99b-fttm4   1/1     Running   0          2m10s
+letskube-deployment-cb77db99b-pj5xf   1/1     Running   0          2m11s
+letskube-deployment-cb77db99b-vf4wm   1/1     Running   0          2m10s
+Farzads-MacBook-Pro:~ farzad$
+
+
+
+how to connect to them:
+
+
+
+How to Creat service:
+Farzads-MacBook-Pro:~ farzad$ kubectl expose deployment letskube-deployment --type=NodePort
+service/letskube-deployment exposed
+Farzads-MacBook-Pro:~ farzad$
+
+verify the service has created 
+
+Farzads-MacBook-Pro:~ farzad$ kubectl get svc
+NAME                  TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+kubernetes            ClusterIP   10.96.0.1       <none>        443/TCP        22m
+letskube-deployment   NodePort    10.103.234.52   <none>        80:31202/TCP   78s
+Farzads-MacBook-Pro:~ farzad$
+
+put the below URL in browser:
+
+http://localhost:31202
+
+
+DELETE THE DEPLOYMENT:
+
+kubectl delete  deployment letskube-deployment
+
+DELETE THE SERVICE:
+kubectl delete  service  letskube-deployment
+
+
+
+creating deployment baseed on yml file:
+Farzads-MacBook-Pro:letskube farzad$ kubectl create -f letskubedeploy.yml
+deployment.apps/letskube-deployment created
+service/letskube-service created
+
+delete a service (which was created by TML file)
+Farzads-MacBook-Pro:letskube farzad$ kubectl delete  -f letskubedeploy.yml
+deployment.apps "letskube-deployment" deleted
+service "letskube-service" deleted
+
+
 
 
 
