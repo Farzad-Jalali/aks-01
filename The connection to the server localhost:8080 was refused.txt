@@ -1,0 +1,8 @@
+https://github.com/kubernetes/kubernetes/issues/23726
+
+Installing kubeadm
+https://kubernetes.io/docs/setup/independent/install-kubeadm/
+
+
+
+
