@@ -1,0 +1,154 @@
+switch to powershell from terminal:
+
+pwsh
+
+
+
+
+az login
+
+see the current subscription:
+az account show 
+
+az account show 
+{
+  "environmentName": "AzureCloud",
+  "id": "702c550c-aeab-400d-b4c0-4519450f274d",
+  "isDefault": true,
+  "name": "Visual Studio Enterprise",
+  "state": "Enabled",
+  "tenantId": "04bc6cd5-a459-4f8d-aada-a7ca8b58c72f",
+  "user": {
+    "name": "farzad.jalali@argentgroup.com",
+    "type": "user"
+  }
+}
+PS /Users/farzad> az account show --output table
+EnvironmentName    IsDefault    Name                      State    TenantId
+-----------------  -----------  ------------------------  -------  ------------------------------------
+AzureCloud         True         Visual Studio Enterprise  Enabled  04bc6cd5-a459-4f8d-aada-a7ca8b58c72f
+
+
+
+PS /Users/farzad> az account list  
+A few accounts are skipped as they don't have 'Enabled' state. Use '--all' to display them.
+[
+  {
+    "cloudName": "AzureCloud",
+    "id": "702c550c-aeab-400d-b4c0-4519450f274d",
+    "isDefault": true,
+    "name": "Visual Studio Enterprise",
+    "state": "Enabled",
+    "tenantId": "04bc6cd5-a459-4f8d-aada-a7ca8b58c72f",
+    "user": {
+      "name": "farzad.jalali@argentgroup.com",
+      "type": "user"
+    }
+  },
+  {
+    "cloudName": "AzureCloud",
+    "id": "7f80b272-e767-4ddd-902f-2c17c31eb189",
+    "isDefault": false,
+    "name": "Access to Azure Active Directory(Converted to EA)",
+    "state": "Enabled",
+    "tenantId": "04bc6cd5-a459-4f8d-aada-a7ca8b58c72f",
+    "user": {
+      "name": "farzad.jalali@argentgroup.com",
+      "type": "user"
+    }
+  }
+]
+
+
+Select the subscription:
+az account set --s 7f80b272-e767-4ddd-902f-2c17c31eb189
+
+
+
+LOGIN TO AZURE COINTANER REGISTERY:
+
+PS /Users/farzad> az acr list -o table
+NAME             RESOURCE GROUP        LOCATION    SKU       LOGIN SERVER                CREATION DATE         ADMIN ENABLED
+---------------  --------------------  ----------  --------  --------------------------  --------------------  ---------------
+CRWAPRD1Docker1  RG-WA-PRD-1-Docker-1  westeurope  Standard  crwaprd1docker1.azurecr.io  2018-12-11T12:09:53Z  True
+
+PS /Users/farzad> az acr login -n CRWAPRD1Docker1
+Login Succeeded
+
+
+
+HOW TO TAG you CONTAINER:
+
+PS /Users/farzad> docker image list
+REPOSITORY                           TAG                 IMAGE ID            CREATED             SIZE
+letskube                             local               42492873cfcc        4 days ago          347MB
+<none>                               <none>              13025a2cb921        4 days ago          2.03GB
+docker/kube-compose-controller       v0.4.18             47df7579c5fc        3 months ago        30.6MB
+docker/kube-compose-api-server       v0.4.18             e73645df5dc6        3 months ago        47.8MB
+k8s.gcr.io/kube-proxy                v1.13.0             8fa56d18961f        4 months ago        80.2MB
+k8s.gcr.io/kube-scheduler            v1.13.0             9508b7d8008d        4 months ago        79.6MB
+k8s.gcr.io/kube-controller-manager   v1.13.0             d82530ead066        4 months ago        146MB
+k8s.gcr.io/kube-apiserver            v1.13.0             f1ff9b7e3d6e        4 months ago        181MB
+k8s.gcr.io/coredns                   1.2.6               f59dcacceff4        5 months ago        40MB
+k8s.gcr.io/etcd                      3.2.24              3cab8e1b9802        6 months ago        220MB
+microsoft/aspnetcore-build           latest              06a6525397c2        8 months ago        2.02GB
+microsoft/aspnetcore                 latest              db030c19e94b        8 months ago        347MB
+k8s.gcr.io/pause                     3.1                 da86e6ba6ca1        16 months ago       742kB
+PS /Users/farzad> docker tag letskube:local crwaprd1docker1.azurecr.io/letskube:v1
+PS /Users/farzad> docker image list                                               
+REPOSITORY                            TAG                 IMAGE ID            CREATED             SIZE
+letskube                              local               42492873cfcc        4 days ago          347MB
+crwaprd1docker1.azurecr.io/letskube   v1                  42492873cfcc        4 days ago          347MB
+<none>                                <none>              13025a2cb921        4 days ago          2.03GB
+docker/kube-compose-controller        v0.4.18             47df7579c5fc        3 months ago        30.6MB
+docker/kube-compose-api-server        v0.4.18             e73645df5dc6        3 months ago        47.8MB
+k8s.gcr.io/kube-proxy                 v1.13.0             8fa56d18961f        4 months ago        80.2MB
+k8s.gcr.io/kube-controller-manager    v1.13.0             d82530ead066        4 months ago        146MB
+k8s.gcr.io/kube-apiserver             v1.13.0             f1ff9b7e3d6e        4 months ago        181MB
+k8s.gcr.io/kube-scheduler             v1.13.0             9508b7d8008d        4 months ago        79.6MB
+k8s.gcr.io/coredns                    1.2.6               f59dcacceff4        5 months ago        40MB
+k8s.gcr.io/etcd                       3.2.24              3cab8e1b9802        6 months ago        220MB
+microsoft/aspnetcore-build            latest              06a6525397c2        8 months ago        2.02GB
+microsoft/aspnetcore                  latest              db030c19e94b        8 months ago        347MB
+k8s.gcr.io/pause                      3.1                 da86e6ba6ca1        16 months ago       742kB
+PS /Users/farzad> 
+
+
+
+
+
+PUSH THE DOCKER IMAGE INTO YOUR CONTAINER:
+
+docker push  crwaprd1docker1.azurecr.io/letskube:v1  
+
+
+HOW TO VERIFY AVILABILITY OF YOUR IMAGE:
+
+az acr repository list -n crwaprd1docker1 -o table 
+
+PS /Users/farzad> az acr repository list -n crwaprd1docker1 -o table 
+Result
+-----------------------------------------------
+berryworld.odata
+berryworld.odata.berryworld.odata
+dojo.dotnet-containers
+letskube
+python.helloworld.dojo.docker.python.helloworld
+simplepython.dojo.docker.python.webapps
+webapp2
+PS /Users/farzad> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
