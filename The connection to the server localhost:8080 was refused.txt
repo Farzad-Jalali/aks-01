@@ -6,3 +6,23 @@ https://kubernetes.io/docs/setup/independent/install-kubeadm/
 
 
 
+SETUP:
+
+K8s on macos
+https://xebia.com/blog/running-kubernetes-locally-docker-mac-os-x/
+
+
+
+Server Refuse 8080 port:
+https://github.com/kubernetes/kubernetes/issues/50295
+
+
+Run these commands solved this issue:
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+After running them, kubectl is working.
+
+
+
