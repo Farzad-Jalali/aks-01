@@ -1,0 +1,190 @@
+az login
+
+ az account list --all
+ 
+ 
+ az account set --subscription 702c550c-aeab-400d-b4c0-4519450f274d
+ 
+
+az aks get-credentials --resource-group frz-rg-aks-03 --name frz-aks-03
+=>
+Merged "frz-aks-03" as current context in /home/farzad/.kube/config
+
+(locally) install Kubectl
+az aks install-cli
+
+
+Enabling HTTP  ROUTING
+az aks enable-addons --resource-group myResourceGroup --name myAKSCluster --addons http_application_routing
+az aks enable-addons --resource-group frz-aks-03 --name frz-aks-03 --addons http_application_routing
+
+
+
+CREAT ACR
+az group create --name frz-rg-acr-01   --location westeurope
+
+az acr create --resource-group frz-rg-acr-01 --name acr007 --sku Basic
+
+acr007.azurecr.io
+
+
+-- Need  running docker daemon
+az acr login --name acr007
+
+
+
+az acr list --resource-group frz-rg-acr-01 --query "[].{acrLoginServer:loginServer}" --output table
+AcrLoginServer
+-----------------
+acr007.azurecr.io
+
+
+# Configure ACR authentication
+
+ 
+az ad sp create-for-rbac --skip-assignment
+{
+  "appId": "16fef18b-484b-4c6a-a47f-9f280515db44",
+  "displayName": "azure-cli-2019-06-07-10-52-37",
+  "name": "http://azure-cli-2019-06-07-10-52-37",
+  "password": "f323d750-5698-4904-869c-7dfa72570056",
+  "tenant": "04bc6cd5-a459-4f8d-aada-a7ca8b58c72f"
+}
+
+
+az acr show --resource-group frz-rg-acr-01 --name acr007 --query "id" --output tsv
+
+/subscriptions/702c550c-aeab-400d-b4c0-4519450f274d/resourceGroups/frz-rg-acr-01/providers/Microsoft.ContainerRegistry/registries/acr007
+
+Replace <appId> and <acrId> with the values gathered in the previous two steps.
+az role assignment create --assignee <appId> --scope <acrId> --role acrpull
+
+az role assignment create --assignee 16fef18b-484b-4c6a-a47f-9f280515db44 --scope /subscriptions/702c550c-aeab-400d-b4c0-4519450f274d/resourceGroups/frz-rg-acr-01/providers/Microsoft.ContainerRegistry/registries/acr007     --role acrpull
+
+
+createimage and push it to ACR:
+
+# locally - build image and push it to ACR
+git clone https://github.com/Azure-Samples/azure-voting-app-redis.git
+cd azure-voting-app-redis
+
+docker-compose build
+output:
+Successfully tagged azure-vote-front:latest
+
+cd .\azure-vote
+docker build --tag latest .
+
+test it in Browser:
+http://localhost:8080/
+
+# Push images to registry
+
+docker tag azure-vote-front acr007.azurecr.io/azure-vote-front:v1
+docker images
+docker push  acr007.azurecr.io/azure-vote-front:v1
+az acr repository show-tags --name acr007 --repository azure-vote-front --output table
+
+
+Create a YML FILE IN sHELL
+(samples-http-application-routing.yaml)
+
+vim samples-http-application-routing.yaml
+
+escape + i 
+
+syart copy / past the below 
+
+when finish , escape + : x  escape
+
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: party-clippy
+spec:
+  template:
+    metadata:
+      labels:
+        app: party-clippy
+    spec:
+      containers:
+      - image: r.j3ss.co/party-clippy
+        name: party-clippy
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi
+        tty: true
+        command: ["party-clippy"]
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: party-clippy
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: party-clippy
+  type: ClusterIP
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: party-clippy
+  annotations:
+    kubernetes.io/ingress.class: addon-http-application-routing
+spec:
+  rules:
+  - host: party-clippy.<CLUSTER_SPECIFIC_DNS_ZONE>
+    http:
+      paths:
+      - backend:
+          serviceName: party-clippy
+          servicePort: 80
+        path: /
+        
+        
+# How to exit Vim       
+Press Esc key: This is very important because you must exit the edit mode first before typing the exit command(s). Next, you can type one of the following commands:
+:q (yes, the colon is included in the command) – This will quite the editor
+:q! – Quit Vim without saving the data file
+:wq – Save the file and exit Vim
+And then Enter key
+
+
+
+
+
+
+# Create a namespace for your ingress resources
+kubectl create namespace ingress-basic
+
+# Use Helm to deploy an NGINX ingress controller
+helm install stable/nginx-ingress \
+    --namespace ingress-basic \
+    --set controller.replicaCount=2 \
+    --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
+    --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+    
+    
+    
+    helm install stable/nginx-ingress \    --namespace ingress-basic \    --set controller.replicaCount=2 \   --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \    --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+    
+
+
+
+
+
+
+
+
+
